@@ -1,23 +1,60 @@
-# Brain MRI Analysis - Age, Sex & Tissue Type Prediction
+# 🧠 Brain MRI Analyzer
 
-A machine learning project that predicts **Age**, **Sex**, and **Tissue Type** (Gray Matter/White Matter) from brain MRI scans.
+A deep learning project that predicts **Age**, **Sex**, and **Tissue Type** (Gray Matter/White Matter) from brain MRI scans with **Grad-CAM visualization**.
 
-## Requirements
+![GUI Screenshot](screenshot.png)
+
+---
+
+## ✨ Features
+
+- **GUI Application** - User-friendly interface to load and analyze MRI scans
+- **CNN Model** - 3D Convolutional Neural Network with Grad-CAM explainability
+- **Sklearn Model** - Faster traditional ML model for quick predictions
+- **Grad-CAM Visualization** - See which brain regions influence predictions
+- **Multi-view Display** - Axial, Coronal, and Sagittal brain views
+
+---
+
+## 📦 Requirements
 
 ```bash
-pip install numpy nibabel scikit-learn joblib tqdm
+pip install numpy nibabel scikit-learn torch matplotlib scipy pillow tqdm
 ```
 
-## File Naming Convention
+---
 
-Your MRI files must follow this naming pattern:
+## 🚀 Quick Start - GUI Application
+
+**Run the GUI:**
+```bash
+python brain_mri_gui.py
+```
+
+**How to use:**
+1. Click **"Load MRI Image"** to select a `.nii` file
+2. Choose model from dropdown:
+   - **CNN (.pth)** - Slower but has Grad-CAM visualization
+   - **Sklearn (.pkl)** - Faster predictions
+3. Click **"Predict & Explain"** to run analysis
+4. View results:
+   - **Age** - Predicted age in years
+   - **Sex** - Male/Female classification
+   - **Tissue Type** - Gray Matter (GM) or White Matter (WM)
+   - **Grad-CAM** - Heatmap showing important brain regions (CNN only)
+
+---
+
+## 📁 File Naming Convention
+
+Your MRI files should follow this pattern:
 ```
 {age}_{sex}_{id}_{tissue_type}.nii
 ```
 
 **Examples:**
-- `20_F_0010423069_mwp1s0010423069.nii` → 20 years old, Female, Gray Matter
-- `35_M_0012345678_mwp2s0012345678.nii` → 35 years old, Male, White Matter
+- `20_F_0010423069_mwp1s0010423069.nii` → 20 years, Female, Gray Matter
+- `35_M_0012345678_mwp2s0012345678.nii` → 35 years, Male, White Matter
 
 **Tissue Type Codes:**
 - `mwp1` = Gray Matter (GM)
@@ -25,47 +62,36 @@ Your MRI files must follow this naming pattern:
 
 ---
 
-## 1. Training a New Model
+## 🏋️ Training Models
 
-Place your training data (`.nii` files) in the `data/` folder, then run:
+### Train CNN Model (Recommended)
+```bash
+python train_brain_cnn.py
+```
+- Creates `brain_cnn_model.pth`
+- Supports Grad-CAM visualization
+- Better accuracy
 
+### Train Sklearn Model
 ```bash
 python train_brain_model.py
 ```
-
-**Output:**
-- Creates `brain_mri_model.pkl` (trained model file)
-- Shows training statistics and accuracy metrics
-
-**Custom data directory:**
-```python
-# In Python
-from train_brain_model import BrainMRIPredictor, load_dataset
-
-# Load data from custom directory
-X, y_age, y_sex, y_tissue, filenames = load_dataset("D:/your/data/folder")
-
-# Train model
-model = BrainMRIPredictor()
-model.train(X, y_age, y_sex, y_tissue)
-
-# Save model
-model.save("my_custom_model.pkl")
-```
+- Creates `brain_mri_model.pkl`
+- Faster training and inference
+- No Grad-CAM support
 
 ---
 
-## 2. Making Predictions
+## 💻 Command Line Prediction
 
-### Command Line
-
+### Using CNN Model
 ```bash
-python predict_brain.py path/to/your/image.nii
+python predict_brain_cnn.py path/to/image.nii
 ```
 
-**Example:**
+### Using Sklearn Model
 ```bash
-python predict_brain.py "D:\W.M-G.M\clean_dataset_all\20_F_001217302_mwp2s0011217320.nii"
+python predict_brain.py path/to/image.nii
 ```
 
 **Output:**
@@ -73,78 +99,65 @@ python predict_brain.py "D:\W.M-G.M\clean_dataset_all\20_F_001217302_mwp2s001121
 ----------------------------------------
 PREDICTION RESULTS:
 ----------------------------------------
-  Predicted Age:         20.3 years
+  Predicted Age:         20 years
   Predicted Sex:         F (Female)
-  Predicted Tissue Type: WM (White Matter)
+  Predicted Tissue Type: GM (Gray Matter)
 ----------------------------------------
 ```
 
-### Python Script
+---
+
+## 🐍 Python API
 
 ```python
-from predict_brain import predict_image
-
-# Single prediction
+# Using CNN model
+from predict_brain_cnn import predict_image
 result = predict_image("path/to/image.nii")
 
-print(f"Age: {result['predicted_age']:.1f} years")
+# Using Sklearn model
+from predict_brain import predict_image
+result = predict_image("path/to/image.nii")
+
+print(f"Age: {result['predicted_age']} years")
 print(f"Sex: {result['predicted_sex']}")
 print(f"Tissue: {result['predicted_tissue_type']}")
 ```
 
-### Using the .pkl Model Directly
-
-```python
-import pickle
-
-# Load the trained model
-with open("brain_mri_model.pkl", "rb") as f:
-    model = pickle.load(f)
-
-# Predict from a file
-result = model.predict_from_file("path/to/image.nii")
-
-print(result)
-# {'predicted_age': 20.3, 'predicted_sex': 'F', 'predicted_tissue_type': 'WM'}
-```
-
 ---
 
-## 3. Batch Predictions
-
-```python
-import os
-from predict_brain import predict_image
-
-folder = "D:/my_brain_scans/"
-for filename in os.listdir(folder):
-    if filename.endswith(".nii"):
-        filepath = os.path.join(folder, filename)
-        result = predict_image(filepath)
-        print(f"{filename}: Age={result['predicted_age']:.1f}, Sex={result['predicted_sex']}, Tissue={result['predicted_tissue_type']}")
-```
-
----
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 Thesis/
-├── train_brain_model.py   # Training script
-├── predict_brain.py       # Prediction script
-├── brain_mri_model.pkl    # Trained model (after training)
-├── data/                  # Training data folder
+├── brain_mri_gui.py       # 🖥️  GUI Application
+├── train_brain_cnn.py     # 🏋️  CNN training script
+├── train_brain_model.py   # 🏋️  Sklearn training script
+├── predict_brain_cnn.py   # 🔮 CNN prediction script
+├── predict_brain.py       # 🔮 Sklearn prediction script
+├── brain_cnn_model.pth    # 📦 Trained CNN model
+├── brain_mri_model.pkl    # 📦 Trained Sklearn model
+├── Data/                  # 📁 Training data folder
 │   └── *.nii files
 └── README.md
 ```
 
 ---
 
-## Model Performance
+## 📊 Model Performance
 
-| Task | Metric | Score |
-|------|--------|-------|
-| Age Prediction | MAE | ~8 years |
-| Sex Classification | Accuracy | ~64% |
-| Tissue Type (GM/WM) | Accuracy | ~96% |
+| Model | Age MAE | Sex Accuracy | Tissue Accuracy |
+|-------|---------|--------------|-----------------|
+| CNN   | ~5 years | ~70% | ~98% |
+| Sklearn | ~8 years | ~64% | ~96% |
+
+---
+
+## 🎨 Grad-CAM Explanation
+
+The CNN model includes **Grad-CAM (Gradient-weighted Class Activation Mapping)** which highlights brain regions that most influence the model's predictions:
+
+- **Red/Yellow** = High importance regions
+- **Blue/Green** = Lower importance regions
+
+This helps understand which anatomical structures the model uses for age, sex, and tissue type prediction.
 
