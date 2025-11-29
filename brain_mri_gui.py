@@ -27,6 +27,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+    import pickle
 except ImportError as e:
     print(f"Missing package: {e}")
     print("Install with: pip install nibabel pillow torch")
@@ -155,7 +156,9 @@ class BrainMRIApp:
 
         # Load model
         self.model = None
+        self.sklearn_model = None
         self.grad_cam = None
+        self.current_model_type = None
         self.current_image_data = None
         self.current_tensor = None
         self.cam_heatmap = None
@@ -163,32 +166,80 @@ class BrainMRIApp:
         self.display_data = None  # Higher resolution for display
         self.current_filepath = None
         self.target_size = (64, 64, 64)
-        self.display_size = (256, 256, 256)  # High resolution for visualization
+        self.display_size = (128, 128, 128)  # Reduced resolution to prevent crashes
         self.load_model()
 
         # Create UI
         self.create_widgets()
 
     def load_model(self):
-        """Load the trained CNN model."""
+        """Load the selected model (CNN or sklearn)."""
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(script_dir, "brain_cnn_model.pth")
+        self.cnn_model_path = os.path.join(script_dir, "brain_cnn_model.pth")
+        self.pkl_model_path = os.path.join(script_dir, "brain_mri_model.pkl")
 
-        if os.path.exists(model_path):
-            self.model = BrainCNN3D().to(DEVICE)
-            checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-            self.model.eval()
+        # Check which models are available
+        self.cnn_available = os.path.exists(self.cnn_model_path)
+        self.pkl_available = os.path.exists(self.pkl_model_path)
 
-            # Setup Grad-CAM on the last conv layer (Block 4)
-            # Target the last Conv3d layer before pooling
-            target_layer = self.model.features[12]  # Block 4 Conv3d
-            self.grad_cam = GradCAM3D(self.model, target_layer)
-
-            print(f"CNN Model loaded successfully!")
-            print(f"  Age MAE: {checkpoint.get('age_mae', 'N/A'):.2f} years")
+        # Default to CNN if available (has Grad-CAM), otherwise pkl
+        if self.cnn_available:
+            self.load_cnn_model()
+        elif self.pkl_available:
+            self.load_pkl_model()
         else:
-            messagebox.showwarning("Warning", f"CNN model not found at:\n{model_path}\n\nRun train_brain_cnn.py first.")
+            messagebox.showwarning("Warning", "No model found!\n\nRun train_brain_cnn.py or train_brain_model.py first.")
+
+    def load_cnn_model(self):
+        """Load PyTorch CNN model with Grad-CAM support."""
+        self.model = BrainCNN3D().to(DEVICE)
+        checkpoint = torch.load(self.cnn_model_path, map_location=DEVICE, weights_only=False)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.model.eval()
+
+        # Setup Grad-CAM on the last conv layer (Block 4)
+        target_layer = self.model.features[12]  # Block 4 Conv3d
+        self.grad_cam = GradCAM3D(self.model, target_layer)
+        self.current_model_type = "cnn"
+
+        print(f"CNN Model loaded successfully!")
+        print(f"  Age MAE: {checkpoint.get('age_mae', 'N/A'):.2f} years")
+
+    def load_pkl_model(self):
+        """Load sklearn pickle model (no Grad-CAM)."""
+        with open(self.pkl_model_path, 'rb') as f:
+            self.sklearn_model = pickle.load(f)
+        self.model = None
+        self.grad_cam = None
+        self.current_model_type = "sklearn"
+        print(f"Sklearn Model loaded successfully!")
+
+    def switch_model(self, *args):
+        """Switch between CNN and sklearn model."""
+        selected = self.model_var.get()
+        print(f"[DEBUG] Dropdown selected: '{selected}'")
+        print(f"[DEBUG] CNN available: {self.cnn_available}, PKL available: {self.pkl_available}")
+
+        if selected == "CNN (.pth) - With Grad-CAM" and self.cnn_available:
+            self.load_cnn_model()
+            self.gradcam_status.configure(text="✅ Grad-CAM Available", fg='#4CAF50')
+            print("[DEBUG] Loaded CNN model")
+        elif selected == "Sklearn (.pkl) - Faster" and self.pkl_available:
+            self.load_pkl_model()
+            self.gradcam_status.configure(text="❌ Grad-CAM Not Available", fg='#FF6B6B')
+            print("[DEBUG] Loaded Sklearn model")
+        else:
+            print(f"[DEBUG] No model loaded - condition not met")
+
+        # Clear previous results (only if widgets exist)
+        self.cam_heatmap = None
+        if hasattr(self, 'ax1'):
+            for ax in [self.ax1, self.ax2, self.ax3]:
+                ax.clear()
+                ax.axis('off')
+            self.canvas.draw()
+
+        print(f"[DEBUG] Current model type: {self.current_model_type}")
 
     def create_widgets(self):
         """Create all GUI widgets."""
@@ -308,6 +359,35 @@ class BrainMRIApp:
         # Buttons at bottom
         btn_frame = tk.Frame(self.root, bg='#1a1a2e')
         btn_frame.pack(pady=10)
+
+        # Model selector dropdown
+        model_frame = tk.Frame(btn_frame, bg='#1a1a2e')
+        model_frame.pack(side=tk.LEFT, padx=10)
+
+        tk.Label(model_frame, text="Model:", font=('Segoe UI', 10, 'bold'),
+                fg='#00d4ff', bg='#1a1a2e').pack(side=tk.LEFT, padx=(0, 5))
+
+        self.model_var = tk.StringVar()
+        model_options = []
+        if self.cnn_available:
+            model_options.append("CNN (.pth) - With Grad-CAM")
+        if self.pkl_available:
+            model_options.append("Sklearn (.pkl) - Faster")
+
+        if model_options:
+            self.model_var.set(model_options[0])
+            self.model_dropdown = ttk.Combobox(model_frame, textvariable=self.model_var,
+                                         values=model_options, state='readonly', width=25)
+            self.model_dropdown.pack(side=tk.LEFT)
+            # Use trace for more reliable callback
+            self.model_var.trace_add('write', self.switch_model)
+
+        # Grad-CAM status indicator
+        status_text = "✅ Grad-CAM Available" if self.cnn_available else "❌ Grad-CAM Not Available"
+        status_color = '#4CAF50' if self.cnn_available else '#FF6B6B'
+        self.gradcam_status = tk.Label(btn_frame, text=status_text, font=('Segoe UI', 9),
+                                       fg=status_color, bg='#1a1a2e')
+        self.gradcam_status.pack(side=tk.LEFT, padx=10)
 
         load_btn = tk.Button(btn_frame, text="📁 Load MRI Image", font=('Segoe UI', 12, 'bold'),
                             bg='#00d4ff', fg='#1a1a2e', padx=20, pady=10,
@@ -433,6 +513,89 @@ class BrainMRIApp:
             messagebox.showwarning("Warning", "Please load an MRI image first!")
             return
 
+        # Check which model to use
+        if self.current_model_type == "cnn":
+            self.predict_cnn()
+        elif self.current_model_type == "sklearn":
+            self.predict_sklearn()
+        else:
+            messagebox.showerror("Error", "No model loaded!")
+
+    def extract_sklearn_features(self, data):
+        """Extract features matching the training format for sklearn model."""
+        # Flatten and remove zero/background voxels
+        flat_data = data.flatten()
+        brain_voxels = flat_data[flat_data > 0.01]
+
+        if len(brain_voxels) == 0:
+            brain_voxels = flat_data[flat_data > 0]
+        if len(brain_voxels) == 0:
+            brain_voxels = flat_data
+
+        # Extract same features as training
+        features = [
+            np.mean(brain_voxels),
+            np.std(brain_voxels),
+            np.median(brain_voxels),
+            np.min(brain_voxels),
+            np.max(brain_voxels),
+            np.percentile(brain_voxels, 5),
+            np.percentile(brain_voxels, 10),
+            np.percentile(brain_voxels, 25),
+            np.percentile(brain_voxels, 75),
+            np.percentile(brain_voxels, 90),
+            np.percentile(brain_voxels, 95),
+            np.sum(brain_voxels),
+            len(brain_voxels),
+            np.var(brain_voxels),
+            np.max(brain_voxels) - np.min(brain_voxels),
+            np.percentile(brain_voxels, 75) - np.percentile(brain_voxels, 25),
+            ((brain_voxels - np.mean(brain_voxels))**3).mean() / (np.std(brain_voxels)**3 + 1e-10),
+            ((brain_voxels - np.mean(brain_voxels))**4).mean() / (np.std(brain_voxels)**4 + 1e-10),
+            np.std(brain_voxels) / (np.mean(brain_voxels) + 1e-10),
+            np.sum(brain_voxels**2),
+            -np.sum((brain_voxels/brain_voxels.sum()) * np.log(brain_voxels/brain_voxels.sum() + 1e-10)),
+        ]
+
+        # Histogram features (20 bins)
+        hist, _ = np.histogram(brain_voxels, bins=20, density=True)
+        features.extend(hist.tolist())
+
+        return np.array(features)
+
+    def predict_sklearn(self):
+        """Run prediction using sklearn model (no Grad-CAM)."""
+        try:
+            # Extract features matching training format
+            data = self.current_image_data.astype(np.float32)
+            X = self.extract_sklearn_features(data).reshape(1, -1)
+
+            # Predict using sklearn model
+            age_pred, sex_pred, tissue_pred = self.sklearn_model.predict(X)
+
+            # Update UI
+            self.age_value.configure(text=f"{int(round(age_pred[0]))} years")
+            self.sex_value.configure(text="Female" if sex_pred[0] == 'F' else "Male")
+            self.tissue_value.configure(text="Gray Matter" if tissue_pred[0] == 'GM' else "White Matter")
+
+            # Clear Grad-CAM (not available for sklearn)
+            self.cam_heatmap = None
+            for ax in [self.ax1, self.ax2, self.ax3]:
+                ax.clear()
+                ax.set_facecolor('#16213e')
+                ax.axis('off')
+            self.ax2.text(0.5, 0.5, "Grad-CAM not available\nfor Sklearn model\n\nSwitch to CNN model\nfor visualizations",
+                         ha='center', va='center', fontsize=14, color='#888888',
+                         transform=self.ax2.transAxes)
+            self.canvas.draw()
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("Error", f"Sklearn prediction failed:\n{e}")
+
+    def predict_cnn(self):
+        """Run prediction using CNN model with Grad-CAM."""
         if self.model is None:
             messagebox.showerror("Error", "CNN Model not loaded!\nRun train_brain_cnn.py first.")
             return
@@ -490,15 +653,64 @@ class BrainMRIApp:
             import traceback
             traceback.print_exc()
 
+    def enhance_brain_slice(self, slice_data):
+        """Enhance brain slice for better visualization."""
+        # Contrast enhancement using percentile clipping
+        p2, p98 = np.percentile(slice_data, (2, 98))
+        slice_enhanced = np.clip(slice_data, p2, p98)
+        slice_enhanced = (slice_enhanced - p2) / (p98 - p2 + 1e-8)
+        return slice_enhanced
+
+    def create_brain_mask(self, slice_data):
+        """Create a mask for brain tissue only using robust detection."""
+        from scipy import ndimage
+        from scipy.ndimage import gaussian_filter, label
+
+        # Normalize data
+        if slice_data.max() == 0:
+            return np.zeros_like(slice_data)
+
+        data_norm = slice_data / slice_data.max()
+
+        # Use Otsu-like thresholding: find threshold that separates brain from background
+        # Brain tissue typically has intensity > 0.15-0.2 of max
+        nonzero = data_norm[data_norm > 0.01].flatten()
+        if len(nonzero) > 0:
+            # Use percentile-based threshold - brain is top 60% of non-zero voxels
+            threshold = np.percentile(nonzero, 25)
+            threshold = max(threshold, 0.08)  # Ensure minimum threshold
+        else:
+            threshold = 0.08
+
+        mask = data_norm > threshold
+
+        # Fill holes inside the brain
+        mask = ndimage.binary_fill_holes(mask)
+
+        # Keep only the largest connected component (the brain)
+        labeled, num_features = label(mask)
+        if num_features > 1:
+            sizes = ndimage.sum(mask, labeled, range(1, num_features + 1))
+            largest = np.argmax(sizes) + 1
+            mask = labeled == largest
+
+        # Erode to ensure heatmap stays inside brain boundary
+        mask = ndimage.binary_erosion(mask, iterations=3)
+        # Dilate back slightly
+        mask = ndimage.binary_dilation(mask, iterations=1)
+
+        # Smooth edges for nice gradient transition
+        mask_smooth = gaussian_filter(mask.astype(float), sigma=2)
+
+        return mask_smooth
+
     def display_gradcam_views(self):
         """Display Grad-CAM in Axial, Coronal, and Sagittal views."""
         if self.cam_heatmap is None or self.display_data is None:
             return
 
-        data = self.display_data  # Use higher resolution data
+        data = self.display_data
         cam = self.cam_heatmap
-
-        # Get center slices
         d, h, w = data.shape
 
         # Clear axes
@@ -506,31 +718,56 @@ class BrainMRIApp:
             ax.clear()
             ax.axis('off')
 
+        # Custom colormap with transparency built in
+        from matplotlib.colors import LinearSegmentedColormap
+        colors_hot = ['#000033', '#0000aa', '#00aaff', '#00ff88', '#ffff00', '#ff8800', '#ff0000']
+        custom_cmap = LinearSegmentedColormap.from_list('brain_heat', colors_hot, N=256)
+
+        # Helper function to create masked RGBA heatmap
+        def create_heatmap_rgba(cam_slice, mask, cmap):
+            """Create RGBA heatmap with mask applied to alpha channel."""
+            # Normalize cam to 0-1
+            cam_norm = (cam_slice - cam_slice.min()) / (cam_slice.max() - cam_slice.min() + 1e-8)
+            # Get RGBA from colormap
+            rgba = cmap(cam_norm)
+            # Apply mask to alpha channel - zero alpha outside brain
+            rgba[..., 3] = mask * 0.7  # 0.7 max alpha for overlay
+            return rgba
+
         # Axial view (top-down, Z slice)
         slice_idx = d // 2
-        brain_slice = np.rot90(data[slice_idx, :, :])
+        brain_raw = np.rot90(data[slice_idx, :, :])
+        brain_slice = self.enhance_brain_slice(brain_raw)
         cam_slice = np.rot90(cam[slice_idx, :, :])
-        self.ax1.imshow(brain_slice, cmap='gray', aspect='equal', interpolation='lanczos')
-        self.ax1.imshow(cam_slice, cmap='jet', alpha=0.45, aspect='equal', interpolation='gaussian')
-        self.ax1.set_title('Axial', color='#00d4ff', fontsize=12, fontweight='bold')
+        brain_mask = self.create_brain_mask(brain_raw)
+        heatmap_rgba = create_heatmap_rgba(cam_slice, brain_mask, custom_cmap)
+        self.ax1.imshow(brain_slice, cmap='bone', aspect='equal', interpolation='bilinear', vmin=0, vmax=1)
+        self.ax1.imshow(heatmap_rgba, aspect='equal', interpolation='bilinear')
+        self.ax1.set_title('Axial', color='#00d4ff', fontsize=13, fontweight='bold', pad=8)
         self.ax1.axis('off')
 
         # Coronal view (front view, Y slice)
         slice_idx = h // 2
-        brain_slice = np.rot90(data[:, slice_idx, :])
+        brain_raw = np.rot90(data[:, slice_idx, :])
+        brain_slice = self.enhance_brain_slice(brain_raw)
         cam_slice = np.rot90(cam[:, slice_idx, :])
-        self.ax2.imshow(brain_slice, cmap='gray', aspect='equal', interpolation='lanczos')
-        self.ax2.imshow(cam_slice, cmap='jet', alpha=0.45, aspect='equal', interpolation='gaussian')
-        self.ax2.set_title('Coronal', color='#00d4ff', fontsize=12, fontweight='bold')
+        brain_mask = self.create_brain_mask(brain_raw)
+        heatmap_rgba = create_heatmap_rgba(cam_slice, brain_mask, custom_cmap)
+        self.ax2.imshow(brain_slice, cmap='bone', aspect='equal', interpolation='bilinear', vmin=0, vmax=1)
+        self.ax2.imshow(heatmap_rgba, aspect='equal', interpolation='bilinear')
+        self.ax2.set_title('Coronal', color='#00d4ff', fontsize=13, fontweight='bold', pad=8)
         self.ax2.axis('off')
 
         # Sagittal view (side view, X slice)
         slice_idx = w // 2
-        brain_slice = np.rot90(data[:, :, slice_idx])
+        brain_raw = np.rot90(data[:, :, slice_idx])
+        brain_slice = self.enhance_brain_slice(brain_raw)
         cam_slice = np.rot90(cam[:, :, slice_idx])
-        self.ax3.imshow(brain_slice, cmap='gray', aspect='equal', interpolation='lanczos')
-        self.ax3.imshow(cam_slice, cmap='jet', alpha=0.45, aspect='equal', interpolation='gaussian')
-        self.ax3.set_title('Sagittal', color='#00d4ff', fontsize=12, fontweight='bold')
+        brain_mask = self.create_brain_mask(brain_raw)
+        heatmap_rgba = create_heatmap_rgba(cam_slice, brain_mask, custom_cmap)
+        self.ax3.imshow(brain_slice, cmap='bone', aspect='equal', interpolation='bilinear', vmin=0, vmax=1)
+        self.ax3.imshow(heatmap_rgba, aspect='equal', interpolation='bilinear')
+        self.ax3.set_title('Sagittal', color='#00d4ff', fontsize=13, fontweight='bold', pad=8)
         self.ax3.axis('off')
 
         self.fig.tight_layout(pad=1.5)
