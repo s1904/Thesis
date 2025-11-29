@@ -35,7 +35,7 @@ def predict_image(nii_path, model_path=None):
     Returns:
     --------
     dict : Dictionary containing predictions
-        - predicted_age: float
+        - predicted_age: int (rounded)
         - predicted_sex: 'M' or 'F'
         - predicted_tissue_type: 'GM' (gray matter) or 'WM' (white matter)
     """
@@ -110,7 +110,7 @@ def main():
         print("\n" + "-"*40)
         print("PREDICTION RESULTS:")
         print("-"*40)
-        print(f"  Predicted Age:         {result['predicted_age']:.1f} years")
+        print(f"  Predicted Age:         {result['predicted_age']} years")
         print(f"  Predicted Sex:         {result['predicted_sex']} ({'Female' if result['predicted_sex'] == 'F' else 'Male'})")
         print(f"  Predicted Tissue Type: {result['predicted_tissue_type']} ({'Gray Matter' if result['predicted_tissue_type'] == 'GM' else 'White Matter'})")
         print("-"*40 + "\n")

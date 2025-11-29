@@ -15,7 +15,7 @@ import numpy as np
 import nibabel as nib
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
 from sklearn.metrics import accuracy_score, mean_absolute_error, classification_report
 import pickle
 from tqdm import tqdm
@@ -69,18 +69,29 @@ def extract_features(nii_path):
             np.median(brain_voxels),         # Median
             np.min(brain_voxels),            # Min
             np.max(brain_voxels),            # Max
+            np.percentile(brain_voxels, 5),  # 5th percentile
+            np.percentile(brain_voxels, 10), # 10th percentile
             np.percentile(brain_voxels, 25), # 25th percentile
             np.percentile(brain_voxels, 75), # 75th percentile
+            np.percentile(brain_voxels, 90), # 90th percentile
+            np.percentile(brain_voxels, 95), # 95th percentile
             np.sum(brain_voxels),            # Total intensity (proxy for volume)
             len(brain_voxels),               # Number of brain voxels
             np.var(brain_voxels),            # Variance
+            np.max(brain_voxels) - np.min(brain_voxels),  # Range
+            np.percentile(brain_voxels, 75) - np.percentile(brain_voxels, 25),  # IQR
             # Skewness and Kurtosis
             ((brain_voxels - np.mean(brain_voxels))**3).mean() / (np.std(brain_voxels)**3 + 1e-10),
             ((brain_voxels - np.mean(brain_voxels))**4).mean() / (np.std(brain_voxels)**4 + 1e-10),
+            # Coefficient of variation
+            np.std(brain_voxels) / (np.mean(brain_voxels) + 1e-10),
+            # Energy and entropy-like features
+            np.sum(brain_voxels**2),         # Energy
+            -np.sum((brain_voxels/brain_voxels.sum()) * np.log(brain_voxels/brain_voxels.sum() + 1e-10)),  # Entropy
         ]
-        
-        # Add histogram features (10 bins)
-        hist, _ = np.histogram(brain_voxels, bins=10, density=True)
+
+        # Add histogram features (20 bins for more detail)
+        hist, _ = np.histogram(brain_voxels, bins=20, density=True)
         features.extend(hist.tolist())
         
         return np.array(features)
@@ -148,9 +159,18 @@ class BrainMRIPredictor:
         self.tissue_encoder = LabelEncoder()
 
         # Models for each prediction task
-        self.age_model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
-        self.sex_model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
-        self.tissue_model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+        # Use GradientBoosting for age (better for regression) with tuned parameters
+        self.age_model = GradientBoostingRegressor(
+            n_estimators=300,
+            learning_rate=0.05,
+            max_depth=5,
+            min_samples_split=5,
+            min_samples_leaf=3,
+            subsample=0.8,
+            random_state=42
+        )
+        self.sex_model = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1, max_depth=10)
+        self.tissue_model = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)
 
         self.is_trained = False
 
@@ -226,7 +246,7 @@ class BrainMRIPredictor:
 
         age, sex, tissue = self.predict(features)
         return {
-            'predicted_age': float(age[0]),
+            'predicted_age': int(round(age[0])),
             'predicted_sex': sex[0],
             'predicted_tissue_type': tissue[0]
         }
@@ -284,7 +304,7 @@ def main():
 
     print(f"File: {filenames[sample_idx]}")
     print(f"Actual    -> Age: {ages[sample_idx]}, Sex: {sexes[sample_idx]}, Tissue: {tissue_types[sample_idx]}")
-    print(f"Predicted -> Age: {age_pred[0]:.1f}, Sex: {sex_pred[0]}, Tissue: {tissue_pred[0]}")
+    print(f"Predicted -> Age: {int(round(age_pred[0]))}, Sex: {sex_pred[0]}, Tissue: {tissue_pred[0]}")
 
     print("\n" + "="*60)
     print(f"  MODEL READY! Use '{MODEL_PATH}' for predictions")
