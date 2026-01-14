@@ -6,7 +6,9 @@ This script trains a machine learning model to predict:
 - Sex (classification: M/F)
 - Tissue Type (classification: GM=gray matter / WM=white matter)
 
-From preprocessed brain MRI NIfTI files (mwp1=GM, mwp2=WM)
+From preprocessed brain MRI NIfTI files:
+- mwp1/mwp2: Modulated warped tissue probability maps (GM/WM)
+- m0wrp1s/m0wrp2s: Modulated normalized tissue probability maps (GM/WM)
 """
 
 import os
@@ -26,20 +28,35 @@ warnings.filterwarnings('ignore')
 def parse_filename(filename):
     """
     Parse filename to extract age, sex, and tissue type.
-    Example: 20_F_001217302_mwp1s0011217320.nii
+    Examples:
+        - 20_F_001217302_mwp1s0011217320.nii (modulated warped)
+        - 17_M_m0wrp1sB01_2364AX4459-0002-00001-000192-01.nii (modulated normalized)
     Returns: (age, sex, tissue_type) or None if not matching pattern
     """
     # Match pattern: Age_Sex_ID_ProcessingType
-    # We only want mwp1 (gray matter) and mwp2 (white matter) files
-    pattern = r'^(\d+)_([MF])_\d+_(mwp[12])'
-    match = re.match(pattern, filename)
-    
+    # We want both mwp1/mwp2 (modulated warped) and m0wrp1s/m0wrp2s (modulated normalized) files
+    # Pattern 1: mwp1 or mwp2 files
+    pattern1 = r'^(\d+)_([MF])_\d+_(mwp[12])'
+    match = re.match(pattern1, filename)
+
     if match:
         age = int(match.group(1))
         sex = match.group(2)
         tissue_prefix = match.group(3)
         tissue_type = 'GM' if tissue_prefix == 'mwp1' else 'WM'
         return age, sex, tissue_type
+
+    # Pattern 2: m0wrp1s or m0wrp2s files (normalized data)
+    pattern2 = r'^(\d+)_([MF])_(m0wrp[12]s)'
+    match = re.match(pattern2, filename)
+
+    if match:
+        age = int(match.group(1))
+        sex = match.group(2)
+        tissue_prefix = match.group(3)
+        tissue_type = 'GM' if 'm0wrp1s' in tissue_prefix else 'WM'
+        return age, sex, tissue_type
+
     return None
 
 
@@ -116,11 +133,11 @@ def load_dataset(data_dir):
     
     # Get all .nii files
     nii_files = [f for f in os.listdir(data_dir) if f.endswith('.nii')]
-    
-    # Filter to only mwp1 and mwp2 files
-    mwp_files = [f for f in nii_files if '_mwp1' in f or '_mwp2' in f]
-    
-    print(f"Found {len(mwp_files)} GM/WM files to process...")
+
+    # Filter to include both modulated warped (mwp1/mwp2) and modulated normalized (m0wrp1s/m0wrp2s) files
+    mwp_files = [f for f in nii_files if '_mwp1' in f or '_mwp2' in f or '_m0wrp1s' in f or '_m0wrp2s' in f]
+
+    print(f"Found {len(mwp_files)} GM/WM files to process (including normalized data)...")
     
     for filename in tqdm(mwp_files, desc="Extracting features"):
         parsed = parse_filename(filename)

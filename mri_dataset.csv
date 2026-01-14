@@ -1,0 +1,86 @@
+subject_id,tissue,gender,age,path
+P23,GM,Female,22,D:\AI_GM+WM_Age+Gender\P 23_GM_Female_22age(2).nii
+P23,GM,Female,22,D:\AI_GM+WM_Age+Gender\P 23_GM_Female_22age(3).nii
+P01,GM,Female,22,D:\AI_GM+WM_Age+Gender\P01_GM_female_22age_MST_002_A (1).nii
+P01,WM,Female,22,D:\AI_GM+WM_Age+Gender\P01_WM_female_22age_MST_002_A (2).nii
+P02,GM,Female,55,D:\AI_GM+WM_Age+Gender\P02r_GM_MST_003_A_Female_55age (1).nii
+P02,WM,Female,55,D:\AI_GM+WM_Age+Gender\P02r_WM_MST_003_A_Female_55age (2).nii
+P03,GM,Female,30,D:\AI_GM+WM_Age+Gender\P03_GM_Female_30age_ (1).nii
+P03,WM,Female,30,D:\AI_GM+WM_Age+Gender\P03_WM_Female_30age_ (2).nii
+P04,GM,Female,23,D:\AI_GM+WM_Age+Gender\P04_GM_Female_23age (2).nii
+P04,WM,Female,23,D:\AI_GM+WM_Age+Gender\P04_Wm_Female_23age (3).nii
+P06,GM,Female,30,D:\AI_GM+WM_Age+Gender\P06_GM_Female_30age (2).nii
+P06,WM,Female,30,D:\AI_GM+WM_Age+Gender\P06_WM_Female_30age (3).nii
+P07,GM,Female,19,D:\AI_GM+WM_Age+Gender\P07_GM_Female_19age(2).nii
+P07,WM,Female,19,D:\AI_GM+WM_Age+Gender\P07_WM_Female_19age(3).nii
+P08,GM,Male,23,D:\AI_GM+WM_Age+Gender\P08_GM_Male_23age (1).nii
+P08,WM,Male,23,D:\AI_GM+WM_Age+Gender\P08_WM_Male_23age (2).nii
+P09,GM,Male,21,D:\AI_GM+WM_Age+Gender\P09_GM_Male_21age(1).nii
+P09,WM,Male,21,D:\AI_GM+WM_Age+Gender\P09_WM_Male_21age(2).nii
+P10,GM,Female,25,D:\AI_GM+WM_Age+Gender\P10_GM_Female_25age (1).nii
+P10,WM,Female,25,D:\AI_GM+WM_Age+Gender\P10_WM_Female_25age (2).nii
+P11,GM,Female,24,D:\AI_GM+WM_Age+Gender\P11_GM_Female_24age(1).nii
+P11,WM,Female,24,D:\AI_GM+WM_Age+Gender\P11_WM_Female_24age(2).nii
+P12,GM,Male,38,D:\AI_GM+WM_Age+Gender\P12_GM_Male_38age (2).nii
+P12,WM,Male,38,D:\AI_GM+WM_Age+Gender\P12_WM_Male_38age (3).nii
+P13,GM,Female,22,D:\AI_GM+WM_Age+Gender\P13_GM_Female_22age(2).nii
+P13,WM,Female,22,D:\AI_GM+WM_Age+Gender\P13_WM_Female_22age(3).nii
+P14,GM,Female,29,D:\AI_GM+WM_Age+Gender\P14_GM_Female_29age(2).nii
+P14,WM,Female,29,D:\AI_GM+WM_Age+Gender\P14_WM_Female_29age(3).nii
+P15,GM,Male,23,D:\AI_GM+WM_Age+Gender\P15_GM_Male_ 23age(1).nii
+P15,WM,Male,23,D:\AI_GM+WM_Age+Gender\P15_WM_Male_ 23age(2).nii
+P16,GM,Male,24,D:\AI_GM+WM_Age+Gender\P16_GM_Male_24age(1).nii
+P16,WM,Male,24,D:\AI_GM+WM_Age+Gender\P16_WM_Male_24age(2).nii
+P17,GM,Male,22,D:\AI_GM+WM_Age+Gender\P17_GM_Male_22age (2).nii
+P17,WM,Male,22,D:\AI_GM+WM_Age+Gender\P17_WM_Male_22age (3).nii
+P18,GM,Female,27,D:\AI_GM+WM_Age+Gender\P18_GM_Female_27age (2).nii
+P18,WM,Female,27,D:\AI_GM+WM_Age+Gender\P18_WM_Female_27age (3).nii
+P19,GM,Female,52,D:\AI_GM+WM_Age+Gender\P19_GM_Famle_52 age (2).nii
+P19,WM,Female,52,D:\AI_GM+WM_Age+Gender\P19_WM_Famle_52 age (3).nii
+P20,GM,Male,22,D:\AI_GM+WM_Age+Gender\P20_GM_Male_22age(2).nii
+P20,GM,Male,22,D:\AI_GM+WM_Age+Gender\P20_GM_Male_22age(3).nii
+P21,GM,Female,50,D:\AI_GM+WM_Age+Gender\P21_GM_Famle_50age(1).nii
+P21,WM,Female,50,D:\AI_GM+WM_Age+Gender\P21_WM_Famle_50age(2).nii
+P22,GM,Male,24,D:\AI_GM+WM_Age+Gender\P22_GM_Male_24age (2).nii
+P22,WM,Male,24,D:\AI_GM+WM_Age+Gender\P22_WM_Male_24age (3).nii
+P24,GM,Female,22,D:\AI_GM+WM_Age+Gender\P24_GM_Female_22age (2).nii
+P24,WM,Female,22,D:\AI_GM+WM_Age+Gender\P24_WM_Female_22age (3).nii
+P25,GM,Female,27,D:\AI_GM+WM_Age+Gender\P25_GM_Female_27age (1).nii
+P26,GM,Female,26,D:\AI_GM+WM_Age+Gender\P26_GM_Female_26age(2).nii
+P26,WM,Female,26,D:\AI_GM+WM_Age+Gender\P26_WM_Female_26age(3).nii
+P27,GM,Male,25,D:\AI_GM+WM_Age+Gender\P27_GM_Male_25age(2).nii
+P27,WM,Male,25,D:\AI_GM+WM_Age+Gender\P27_WM_Male_25age(3).nii
+P28,GM,Male,23,D:\AI_GM+WM_Age+Gender\P28_GM_Male_23age (2).nii
+P28,WM,Male,23,D:\AI_GM+WM_Age+Gender\P28_WM_Male_23age (3).nii
+P29,GM,Female,21,D:\AI_GM+WM_Age+Gender\P29_GM_Female_21age (2).nii
+P29,WM,Female,21,D:\AI_GM+WM_Age+Gender\P29_WM_Female_21age (3).nii
+P30,GM,Male,23,D:\AI_GM+WM_Age+Gender\P30_GM_Male_23age (2).nii
+P30,WM,Male,23,D:\AI_GM+WM_Age+Gender\P30_WM_Male_23age (3).nii
+P31,GM,Female,28,D:\AI_GM+WM_Age+Gender\P31_GM_Female_28age(2).nii
+P31,WM,Female,28,D:\AI_GM+WM_Age+Gender\P31_WM_Female_28age(3).nii
+P32,GM,Male,25,D:\AI_GM+WM_Age+Gender\P32_GM_Male_25age(2).nii
+P32,WM,Male,25,D:\AI_GM+WM_Age+Gender\P32_WM_Male_25age(3).nii
+P33,GM,Female,23,D:\AI_GM+WM_Age+Gender\P33_GM_Female_23age(2).nii
+P33,WM,Female,23,D:\AI_GM+WM_Age+Gender\P33_WM_Female_23age(3).nii
+P34,GM,Female,23,D:\AI_GM+WM_Age+Gender\P34_GM_Female_23age(2).nii
+P34,WM,Female,23,D:\AI_GM+WM_Age+Gender\P34_WM_Female_23age(3).nii
+P35,GM,Female,20,D:\AI_GM+WM_Age+Gender\P35_GM_Female_ 20age(2).nii
+P35,WM,Female,20,D:\AI_GM+WM_Age+Gender\P35_WM_Female_ 20age(3).nii
+P36,GM,Female,41,D:\AI_GM+WM_Age+Gender\P36_GM_Famle_ 41age(2).nii
+P36,WM,Female,41,D:\AI_GM+WM_Age+Gender\P36_WM_Famle_ 41age(3).nii
+P37,GM,Female,53,D:\AI_GM+WM_Age+Gender\P37_GM_Female_53age(1).nii
+P37,WM,Female,53,D:\AI_GM+WM_Age+Gender\P37_WM_Female_53age(2).nii
+P38,GM,Female,58,D:\AI_GM+WM_Age+Gender\P38_GM_Female_58age (1).nii
+P38,WM,Female,58,D:\AI_GM+WM_Age+Gender\P38_WM_Female_58age (2).nii
+P39,GM,Male,21,D:\AI_GM+WM_Age+Gender\P39_GM_Male_21age (1).nii
+P39,WM,Male,21,D:\AI_GM+WM_Age+Gender\P39_WM_Male_21age (2).nii
+P40,GM,Male,23,D:\AI_GM+WM_Age+Gender\P40_GM_Male_23age(1).nii
+P40,WM,Male,23,D:\AI_GM+WM_Age+Gender\P40_WM_Male_23age(2).nii
+P41,GM,Female,23,D:\AI_GM+WM_Age+Gender\P41_GM_Female_23age(1).nii
+P41,WM,Female,23,D:\AI_GM+WM_Age+Gender\P41_WM_Female_23age(2).nii
+P42,GM,Female,27,D:\AI_GM+WM_Age+Gender\P42_GM_Female_27age(1).nii
+P42,WM,Female,27,D:\AI_GM+WM_Age+Gender\P42_WM_Female_27age(2).nii
+P43,GM,Female,23,D:\AI_GM+WM_Age+Gender\P43_GM_Female_23age(1).nii
+P43,WM,Female,23,D:\AI_GM+WM_Age+Gender\P43_WM_Female_23age(2).nii
+P44,GM,Female,30,D:\AI_GM+WM_Age+Gender\P44_GM_Female_30age (1).nii
+P44,WM,Female,30,D:\AI_GM+WM_Age+Gender\P44_WM_Female_30age(2).nii
